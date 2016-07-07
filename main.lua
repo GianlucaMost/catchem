@@ -4,6 +4,8 @@ haunted = { }
 hunters = { }
 obstacles = { }
 obstacleNames = { "blue", "darkgray", "gray", "green", "lightblue", "orange", "pink", "purple", "red", "red2", "white" }
+bgm = love.audio.newSource("assets/sounds/music/nyan_sound.mp3", "stream")
+bgm:setVolume(0.5)
 playerSpeed = 200
 menu = true
 debugMode = true
@@ -23,13 +25,26 @@ function love.load()
 end
 
 function generate()
+
+	for i=1, 2 + math.random(8) do
+		obstacle = {
+			x = 0,
+			y = 0,
+			image = love.graphics.newImage(randomObstacle());
+		}
+		randomPosition(obstacle)
+
+		table.insert(obstacles, obstacle)
+	end
+
 	player = {
     id = idCount,
-		x = 512,
-		y = 512,
+		x = 0,
+		y = 0,
 		image = love.graphics.newImage('assets/nyan_dog.png'),
 		hunter = true;
 	}
+	randomPosition(player)
 	table.insert(hunters, player)
   idCount = idCount + 1
 
@@ -69,9 +84,24 @@ function serializeObstacles()
   for i,v in ipairs(obstacles) do
     message = message .. "," .. v.x .. "," .. v.y .. "," .. v.imagePath
   end
+=======
+
+	player2 = {
+		x = 0,
+		y = 0,
+		image = love.graphics.newImage('assets/nyan_cat.png'),
+		name = "first",
+		hunter = false
+	}
+	randomPosition(player2)
+	table.insert(haunted, player2)
+
+  network.init()
+>>>>>>> b7632e4b2efc9e3aba19705c0ddc4762ffaea3a2
 end
 
 background = love.graphics.newImage ("/assets/background.png")
+
 function love.draw()
 	if menu then
 		love.graphics.print("Press S to create a server, press C to connect", 530, 300);
@@ -94,6 +124,7 @@ function love.draw()
 		for i, obst in ipairs(obstacles) do
 			love.graphics.draw(obst.image, obst.x, obst.y)
 		end
+		love.audio.play(bgm)
 	end
 end
 
