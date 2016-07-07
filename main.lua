@@ -1,3 +1,4 @@
+local network = require "network"
 gameTime = 0
 players = { }
 obstacles = { }
@@ -32,7 +33,10 @@ function generate()
 		image = love.graphics.newImage("assets/house.png");
 	}
 	randomPosition(firstObstacle)
+	
 	table.insert(obstacles, firstObstacle)
+
+  network.init()
 end
 
 function love.draw()
@@ -127,8 +131,10 @@ function love.update(dt)
 	 movement(dt)
 	
 	end
+	
+	--network.update()
   
- 
+
  if love.keyboard.isDown('escape') then
 	love.event.push('quit')
   end
