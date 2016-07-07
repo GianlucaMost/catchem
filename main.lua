@@ -5,6 +5,7 @@ obstacles = { }
 playerSpeed = 100;
 
 function love.load()
+	math.randomseed(os.time())
 	player = {
 		x = 512,
 		y = 512,
@@ -25,10 +26,9 @@ function love.load()
 	firstObstacle = {
 		x = 400,
 		y = 400,
-		image = love.graphics.newImage("assets/firstObstacle.png");
+		image = love.graphics.newImage("assets/house.png");
 	}
-
-	table.insert(obstacles, firstObstacle)
+	randomPosition(firstObstacle)
 
   network.init()
 end
@@ -67,12 +67,26 @@ function movement(dt)
         end
     end
 
-	for i, obst in ipairs(obstacles) do
-		if checkCollision(player.x, player.y, player.image:getWidth(), player.image:getHeight(), obst.x, obst.y, obst.image:getWidth(), obst.image:getHeight()) then
+		if checkObstackleCollision(player) then
 			player.x = xBefore;
 			player.y = yBefore;
 		end
+end
+
+function randomPosition(object)
+	repeat
+		object.x = math.random(0, love.graphics.getWidth() - 1 - object.image:getWidth())
+		object.y = math.random(0, love.graphics.getHeight() - 1 - object.image:getHeight())
+	until not checkObstackleCollision(object)
+end
+
+function checkObstackleCollision(object)
+	for i, obst in ipairs(obstacles) do
+		if checkCollision(object.x, object.y, object.image:getWidth(), object.image:getHeight(), obst.x, obst.y, obst.image:getWidth(), obst.image:getHeight()) then
+			return true
+		end
 	end
+	return false
 end
 
 function love.update(dt)
@@ -85,6 +99,10 @@ function love.update(dt)
   end
 
  movement(dt)
+
+ if love.keyboard.isDown('escape') then
+	love.event.push('quit')
+  end
 
 end
 
