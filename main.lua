@@ -17,28 +17,11 @@ function love.load()
 end
 
 function generate()
-	player = {
-		x = 512,
-		y = 512,
-		image = love.graphics.newImage('assets/nyan_dog.png'),
-		name = "first",
-		hunter = true
-	}
-	table.insert(hunters, player)
-
-	player2 = {
-		x = 200,
-		y = 200,
-		image = love.graphics.newImage('assets/nyan_cat.png'),
-		name = "first",
-		hunter = false
-	}
-	table.insert(haunted, player2)
 
 	for i=1, 2 + math.random(8) do
 		obstacle = {
-			x = 400,
-			y = 400,
+			x = 0,
+			y = 0,
 			image = love.graphics.newImage(randomObstacle());
 		}
 		randomPosition(obstacle)
@@ -46,10 +29,31 @@ function generate()
 		table.insert(obstacles, obstacle)
 	end
 
+	player = {
+		x = 0,
+		y = 0,
+		image = love.graphics.newImage('assets/nyan_dog.png'),
+		name = "first",
+		hunter = true
+	}
+	randomPosition(player)
+	table.insert(hunters, player)
+
+	player2 = {
+		x = 0,
+		y = 0,
+		image = love.graphics.newImage('assets/nyan_cat.png'),
+		name = "first",
+		hunter = false
+	}
+	randomPosition(player2)
+	table.insert(haunted, player2)
+
   network.init()
 end
 
 background = love.graphics.newImage ("/assets/background.png")
+
 function love.draw()
 	if menu then
 		love.graphics.print("Press S to create a server, press C to connect", 530, 300);
