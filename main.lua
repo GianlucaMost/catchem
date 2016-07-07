@@ -39,10 +39,11 @@ function love.draw()
     end
 end
 
+
 function movement(dt) 
   xBefore = player.x;
   yBefore = player.y;
-  
+
   if love.keyboard.isDown('down', 's') then
         if player.y < (love.graphics.getHeight() - player.image:getHeight()) then
             player.y = player.y + (playerSpeed*dt)
