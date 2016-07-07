@@ -1,10 +1,14 @@
 local network = require "network"
 gameTime = 0
-players = { }
+haunted = { }
+hunters = { }
 obstacles = { }
 obstacleNames = { "blue", "darkgray", "gray", "green", "lightblue", "orange", "pink", "purple", "red", "red2", "white" }
 playerSpeed = 200
 menu = true
+
+maxDistanceSquared = 40000;
+mayHuntersSeeHunters = true;
 
 function love.load()
 	math.randomseed(os.time())
@@ -15,18 +19,19 @@ function generate()
 		x = 512,
 		y = 512,
 		image = love.graphics.newImage('assets/nyan_cat.png'),
-		name = "first"
+		name = "first",
+		hunter = true
 	}
-	table.insert(players, player)
-
+	table.insert(hunters, player)
+	
 	player2 = {
-		x = 256,
-		y = 256,
-		image = love.graphics.newImage('assets/nyan_dog.png'),
-		name = "second"
+		x = 200,
+		y = 200,
+		image = love.graphics.newImage('assets/nyan_cat.png'),
+		name = "first",
+		hunter = false
 	}
-
-	table.insert(players, player2)
+	table.insert(haunted, player2)
 
 	for i=1, 2 + math.random(8) do
 		obstacle = {
@@ -52,8 +57,15 @@ function love.draw()
 	      love.graphics.draw(background, i * background:getWidth(), j * background:getHeight())
 	    end
 	  end
-		for i, player in ipairs(players) do
-			love.graphics.draw(player.image, player.x, player.y)
+		for i, p in ipairs(hunters) do
+			if (player.hunter and mayHuntersSeeHunters) or (calcDistanceSquared(player, p) < maxDistanceSquared) then
+				love.graphics.draw(p.image, p.x, p.y)
+			end
+		end
+		for i, p in ipairs(haunted) do
+			if calcDistanceSquared(player, p) < maxDistanceSquared then
+				love.graphics.draw(p.image, p.x, p.y)
+			end
 		end
 		for i, obst in ipairs(obstacles) do
 			love.graphics.draw(obst.image, obst.x, obst.y)
@@ -61,6 +73,14 @@ function love.draw()
 	end
 end
 
+function calcDistanceSquared(object1, object2) 
+	xCenter1 = object1.x + object1.image:getWidth() / 2;
+	yCenter1 = object1.y + object1.image:getHeight() / 2;
+	xCenter2 = object2.x + object2.image:getWidth() / 2;
+	yCenter2 = object2.y + object2.image:getHeight() / 2;
+	
+	return (xCenter1-xCenter2)*(xCenter1-xCenter2) + (yCenter1 - yCenter2) * (yCenter1 - yCenter2);
+end
 
 function movement(dt)
   xBefore = player.x;
@@ -111,10 +131,16 @@ end
 function startServer()
 	generate()
 	menu = false;
+	
+	--start listening for clients and send them everything
+	--for a new client create a new haunted
+	-- when all haunted are hunters: Restart: One random hunter, that is stunned 4 seconds
 end
 
 function connectToServer()
 	menu = false;
+	-- Set Variable player
+	-- Get other players and obstacles from server
 end
 
 function whatToDo()
@@ -131,7 +157,7 @@ function love.update(dt)
 	  whatToDo()
 	else
 	  gameTime = gameTime + dt
-	  for i, p in ipairs(players) do
+	  for i, p in ipairs(haunted) do
 		if not i == 0 then
 			p.x = math.sin(gameTime)*100
 		end
