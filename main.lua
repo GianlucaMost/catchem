@@ -1,5 +1,6 @@
 gameTime = 0
 players = { }
+playerSpeed = 100;
 
 function love.load()
 	player = {
@@ -17,7 +18,7 @@ function love.load()
 		name = "second"
 	}
 
-	table.insert(players, player)
+	table.insert(players, player2)
 end
 
 function love.draw()
@@ -28,7 +29,29 @@ end
 
 function love.update(dt)
   gameTime = gameTime + dt
-  for i, player in ipairs(players) do
-        player.x = math.sin(gameTime)*100
+  for i, p in ipairs(players) do
+	if not i == 0 then
+        p.x = math.sin(gameTime)*100
+	end
   end
+  
+  if love.keyboard.isDown('up', 's') then
+        if player.y < (love.graphics.getHeight() - player.image:getHeight()) then
+            player.y = player.y + (playerSpeed*dt)
+        end
+    elseif love.keyboard.isDown('down', 'w') then
+        if player.y > 0 then
+            player.y = player.y - (playerSpeed*dt)
+        end
+    end
+
+    if love.keyboard.isDown('left','a') then
+        if player.x > 0 then -- binds us to the map
+            player.x = player.x - (playerSpeed*dt)
+        end
+    elseif love.keyboard.isDown('right','d') then
+        if player.x < (love.graphics.getWidth() - player.image:getWidth()) then
+            player.x = player.x + (playerSpeed*dt)
+        end
+    end
 end
