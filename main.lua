@@ -4,7 +4,8 @@ haunted = { }
 hunters = { }
 obstacles = { }
 obstacleNames = { "blue", "darkgray", "gray", "green", "lightblue", "orange", "pink", "purple", "red", "red2", "white" }
-bgm = love.audio.newSource("assets/sounds/nyan_sound.mp3", "stream")
+bgm = love.audio.newSource("assets/sounds/music/nyan_sound.mp3", "stream")
+bgm:setVolume(0.5)
 playerSpeed = 200
 menu = true
 debugMode = true
