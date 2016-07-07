@@ -7,11 +7,11 @@ local server = {}
 local address = "localhost:6789"
 
 -- In love.load
-function M.init()
+function M.init(isServer)
 	local error_message
 	server.host, error_message = enet.host_create (address)
 
-	if not server.host then
+	if not isServer then
 		print ("Running in client mode")
 		server = nil
 	else

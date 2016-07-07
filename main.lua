@@ -1,4 +1,4 @@
-local network = require "network"
+local str = require "strings"
 gameTime = 0
 haunted = { }
 hunters = { }
@@ -8,6 +8,12 @@ playerSpeed = 200
 menu = true
 debugMode = true
 server = false
+idCount = 0
+
+
+local client = {}
+local server = {}
+local address = "localhost:6789"
 
 maxDistanceSquared = 40000;
 mayHuntersSeeHunters = true;
@@ -18,35 +24,51 @@ end
 
 function generate()
 	player = {
+    id = idCount,
 		x = 512,
 		y = 512,
 		image = love.graphics.newImage('assets/nyan_dog.png'),
-		name = "first",
-		hunter = true
+		hunter = true;
 	}
 	table.insert(hunters, player)
-
-	player2 = {
-		x = 200,
-		y = 200,
-		image = love.graphics.newImage('assets/nyan_cat.png'),
-		name = "first",
-		hunter = false
-	}
-	table.insert(haunted, player2)
+  idCount = idCount + 1
 
 	for i=1, 2 + math.random(8) do
+    path = randomObstacle()
 		obstacle = {
 			x = 400,
 			y = 400,
-			image = love.graphics.newImage(randomObstacle());
+			image = love.graphics.newImage(path),
+      imagePath = path;
 		}
 		randomPosition(obstacle)
 
 		table.insert(obstacles, obstacle)
 	end
+end
 
-  network.init()
+function generatePlayer()
+  player2 = {
+    id = idCount,
+		x = 512,
+		y = 512,
+		image = love.graphics.newImage('assets/nyan_cat.png'),
+		hunter = false
+	}
+	table.insert(hunters, player2)
+  idCount = idCount + 1
+  return player2
+end
+
+function serializePlayer(player, isCurrentPlayer)
+  return "Player," .. isCurrentPlayer .. "," .. player.id .. "," .. player.x .. "," .. player.y .. ","  .. player.hunter
+end
+
+function serializeObstacles()
+  message = "Obstacles"
+  for i,v in ipairs(obstacles) do
+    message = message .. "," .. v.x .. "," .. v.y .. "," .. v.imagePath
+  end
 end
 
 background = love.graphics.newImage ("/assets/background.png")
@@ -132,6 +154,7 @@ end
 
 function startServer()
 	generate()
+  init(true)
 	menu = false;
 	server = true
 	--start listening for clients and send them everything
@@ -140,7 +163,8 @@ function startServer()
 end
 
 function connectToServer()
-	menu = false
+  init(false)
+  generatePlayer()
 	server = false
 	-- Set Variable player
 	-- Get other players and obstacles from server
@@ -162,6 +186,7 @@ function collision()
 				table.insert(hunters, ha)
 				table.remove(haunted, j)
 				ha.hunter = true
+        -- TODO Clients informieren
 			end
 		end
 	end
@@ -212,6 +237,186 @@ end
 
 function randomObstacle()
 	path = "assets/colorblocks/" .. obstacleNames[math.random(1, table.getn(obstacleNames))] .. ".png"
-	print(path)
 	return path
+end
+
+-- In love.load
+function init(isServer)
+	local error_message
+	server.host, error_message = enet.host_create (address)
+
+	if not isServer then
+		print ("Running in client mode")
+		server = nil
+	else
+		print ("Server: listening...")
+		client = nil
+	end
+
+	if client then
+		print ("Client: connecting to server: " .. address)
+		client.host = enet.host_create()
+		client.host:connect (address)
+
+		client.counter = 0
+		client.peer = false
+		client.connect_timestamp = 0
+		client.duration = 10
+		client.last_message_timestamp = 0
+	end
+end
+
+function server_list_peers()
+	if server.host:peer_count() <= 0 then
+		return
+	end
+
+	print ("list of peers:")
+
+	local i = 1
+	while i < server.host:peer_count() + 1 do
+		local p = server.host:get_peer(i)
+		print ("  " .. i .. " : " .. tostring(p) .. " state: " .. p:state() .. " connectID: " .. tostring (p:connect_id()))
+		i = i + 1
+	end
+end
+
+local server_peer = {}
+
+function server_update ()
+	local event = server.host:service()
+
+	while event ~= nil do
+		if event.type == "receive" then
+			print ("Server: got message: ", event.data, event.peer)
+			event.peer:send(event.data)
+			local limit, minimum, maximum = event.peer:timeout(5, 800, 1200);
+		elseif event.type == "connect" then
+			print ("Server: got a new connection (peer count = " .. server.host:peer_count() .. "). Peer index = " .. event.peer:index())
+			server_list_peers()
+			server_peer = event.peer
+      player2 = generatePlayer()
+      event.peer:send(serializePlayer(player2, true))
+      for i,v in ipairs(hunters) do
+        if not v.id = player2.id then
+          event.peer:send(serializePlayer(v, false))
+        end
+      end
+      for i,v in ipairs(haunted) do
+        if not v.id == player2.id then
+          event.peer:send(serializePlayer(v, false))
+        end
+      end
+      event.peer:send(serializeObstacles())
+		elseif event.type == "disconnect" then
+			print ("Server: lost connection to peer: " .. tostring(event.peer) .. " (peer count = " .. server.host:peer_count() .. ")")
+		end
+
+		event = server.host:service()
+	end
+end
+
+function client_update (dt)
+	local event = client.host:service()
+
+	while event ~= nil do
+		if event.type == "connect" then
+			print ("Client: connected to: " .. tostring(event.peer))
+			client.peer = event.peer
+			client.connect_timestamp = love.timer.getTime()
+
+			event.peer:send("Hello server")
+			client.last_message_timestamp = love.timer.getTime()
+
+			print ("Client: initializing ping interval   = " .. event.peer:ping_interval (500))
+			print ("Client: Initializing round_trip_time = " .. client.peer:round_trip_time (50))
+
+			local limit, minimum, maximum = client.peer:timeout(16, 1000, 1500);
+		elseif event.type == "disconnect" then
+			print ("Client: Disconnected from Server!")
+			love.event.push("quit")
+		elseif event.type == "receive" then
+			print ("Client: received message: ", event.data, event.peer)
+			client.counter = client.counter + 1
+      processMessage(event.data)
+		end
+
+		event = client.host:service()
+	end
+
+	-- actions that are done every second
+	if client.peer and math.floor (love.timer.getTime() - client.last_message_timestamp) > 0 then
+		client.last_message_timestamp = love.timer.getTime()
+		client.peer:send("Packet " .. tostring (client.counter))
+	end
+end
+
+-- In love.update
+function update(dt)
+	if server then
+		server_update (dt)
+	end
+
+	if client then
+		client_update (dt)
+	end
+end
+
+function sendMessage(message)
+  local event = client.host:service()
+  client.peer = event.peer
+  event.peer:send(message)
+end
+
+function processMessage(message)
+  splitted = str.split(message,",")
+  if splitted[1] == "Player"
+    p = {
+      id = splitted[3]
+      x = splitted[4],
+      y = splitted[5],
+      image = love.graphics.newImage('assets/nyan_cat.png'),
+      hunter = splitted[6]
+    }
+    if splitted[2] == "true" then
+      player = p
+    end
+    if splitted[6] == "true" then
+      p.image = love.graphics.newImage('assets/nyan_dog.png')
+        table.insert(hunters, p)
+    else
+      table.insert(haunted, p)
+    end
+  elseif splitted[1] == "Obstacles"
+    count = 0
+    for i,v in ipairs(splitted) do
+      if not i == 1 then
+        if count == 0 then
+          obstacleX = v
+        elseif count == 1
+          obstacleY = v
+        elseif count == 2
+          obstacleImagePath = v
+          obstacle = {
+      			x = obstacleX,
+      			y = obstacleY,
+      			image = love.graphics.newImage(obstacleImagePath)
+            imagePath = obstacleImagePath;
+      		}
+
+      		table.insert(obstacles, obstacle)
+          count = 0
+        end
+      end
+    end
+    	menu = false
+  end
+end
+
+function love.keypressed(key, code)
+	print ("got key: " .. key)
+
+	if (key == "escape") then
+		love.event.push("quit")
+	end
 end
