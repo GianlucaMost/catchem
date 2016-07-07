@@ -10,12 +10,12 @@ bgm:setVolume(0.5)
 playerSpeed = 200
 menu = true
 debugMode = true
-server = false
+isServer = false
 idCount = 0
 
 
-local client = {}
-local server = {}
+local client = {activated = false}
+local server = {activated = false}
 local address = "localhost:6789"
 
 maxDistanceSquared = 40000;
@@ -26,18 +26,6 @@ function love.load()
 end
 
 function generate()
-
-	for i=1, 2 + math.random(8) do
-		obstacle = {
-			x = 0,
-			y = 0,
-			image = love.graphics.newImage(randomObstacle());
-		}
-		randomPosition(obstacle)
-
-		table.insert(obstacles, obstacle)
-	end
-
 	player = {
     id = idCount,
 		x = 0,
@@ -174,7 +162,7 @@ function startServer()
 	generate()
   init(true)
 	menu = false
-	server = true
+	isServer = true
 	--start listening for clients and send them everything
 	--for a new client create a new haunted
 	-- when all haunted are hunters: Restart: One random hunter, that is stunned 4 seconds
@@ -183,8 +171,7 @@ end
 function connectToServer()
   init(false)
   generatePlayer()
-	menu = false
-	server = false
+	isServer = false
 	-- Set Variable player
 	-- Get other players and obstacles from server
 end
@@ -196,7 +183,7 @@ function whatToDo()
 	end
 	if love.keyboard.isDown('c') then
 		connectToServer()
-			update()
+		update()
 	end
 end
 
@@ -226,7 +213,7 @@ function love.update(dt)
 		end
 
 		movement(dt)
-		if server then
+		if isServer then
 			collision()
 			--if table.getn(haunted) == 0 then
 				--print("Ende")
@@ -269,6 +256,7 @@ function init(isServer)
 		server = nil
 	else
 		server.host, error_message = enet.host_create (address)
+		server.activated = true
 		print ("Server: listening...")
 		client = nil
 	end
@@ -278,11 +266,13 @@ function init(isServer)
 		client.host = enet.host_create()
 		client.host:connect (address)
 
+		client.activated = true
 		client.counter = 0
 		client.peer = false
 		client.connect_timestamp = 0
 		client.duration = 10
 		client.last_message_timestamp = 0
+
 	end
 end
 
@@ -305,6 +295,7 @@ local server_peer = {}
 
 function server_update ()
 	local event = server.host:service()
+	print(event.type)
 
 	while event ~= nil do
 		if event.type == "receive" then
@@ -338,6 +329,7 @@ end
 
 function client_update (dt)
 	local event = client.host:service()
+	print(event.type)
 
 	while event ~= nil do
 		if event.type == "connect" then
@@ -373,11 +365,11 @@ end
 
 -- In love.update
 function update(dt)
-	if server.host then
+	if not server == nil and server.activated then
 		server_update (dt)
 	end
 
-	if client.host then
+	if not client == nil and client.activated then
 		client_update (dt)
 	end
 end
@@ -389,6 +381,7 @@ function sendMessage(message)
 end
 
 function processMessage(message)
+	print("test")
   splitted = str.split(message,",")
   if splitted[1] == "Player" then
     p = {
