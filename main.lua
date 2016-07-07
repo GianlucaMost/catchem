@@ -30,16 +30,16 @@ end
 function love.update(dt)
   gameTime = gameTime + dt
   for i, p in ipairs(players) do
-	if not i == 0 then
+		  if not i == 0 then
         p.x = math.sin(gameTime)*100
-	end
+			end
   end
-  
-  if love.keyboard.isDown('up', 's') then
+
+  if love.keyboard.isDown('down', 's') then
         if player.y < (love.graphics.getHeight() - player.image:getHeight()) then
             player.y = player.y + (playerSpeed*dt)
         end
-    elseif love.keyboard.isDown('down', 'w') then
+    elseif love.keyboard.isDown('up', 'w') then
         if player.y > 0 then
             player.y = player.y - (playerSpeed*dt)
         end
