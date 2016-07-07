@@ -96,15 +96,6 @@ function client_update (dt)
 		event = client.host:service()
 	end
 
-	if client.connect_timestamp > 0 and client.connect_timestamp - love.timer.getTime() + client.duration < 0 then
-		print ("Client: Exiting!")
-		print ("Client: In/Out: " .. client.host:total_received_data() .. "/" .. client.host:total_sent_data())
-		client.peer:disconnect()
-		client.host:service(100)
-		client.peer = false
-		love.event.push("quit")
-	end
-
 	-- actions that are done every second
 	if client.peer and math.floor (love.timer.getTime() - client.last_message_timestamp) > 0 then
 		client.last_message_timestamp = love.timer.getTime()
