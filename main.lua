@@ -173,7 +173,7 @@ end
 function startServer()
 	generate()
   init(true)
-	menu = false;
+	menu = false
 	server = true
 	--start listening for clients and send them everything
 	--for a new client create a new haunted
@@ -183,6 +183,7 @@ end
 function connectToServer()
   init(false)
   generatePlayer()
+	menu = false
 	server = false
 	-- Set Variable player
 	-- Get other players and obstacles from server
@@ -191,9 +192,11 @@ end
 function whatToDo()
 	if love.keyboard.isDown('s') then
 		startServer()
+		update()
 	end
 	if love.keyboard.isDown('c') then
 		connectToServer()
+			update()
 	end
 end
 
@@ -211,6 +214,7 @@ function collision()
 end
 
 function love.update(dt)
+	update()
 	if menu then
 	  whatToDo()
 	else
@@ -224,16 +228,14 @@ function love.update(dt)
 		movement(dt)
 		if server then
 			collision()
-			if table.getn(haunted) == 0 then
-				print("Ende")
+			--if table.getn(haunted) == 0 then
+				--print("Ende")
 				--TODO restart
 				--TODO set all haunted back to hunter = false
-			end
+			--end
 		end
 
 	end
-
-	--network.update()
 
 
 	if love.keyboard.isDown('escape') then
@@ -261,12 +263,12 @@ end
 -- In love.load
 function init(isServer)
 	local error_message
-	server.host, error_message = enet.host_create (address)
 
 	if not isServer then
 		print ("Running in client mode")
 		server = nil
 	else
+		server.host, error_message = enet.host_create (address)
 		print ("Server: listening...")
 		client = nil
 	end
@@ -371,11 +373,11 @@ end
 
 -- In love.update
 function update(dt)
-	if server then
+	if server.host then
 		server_update (dt)
 	end
 
-	if client then
+	if client.host then
 		client_update (dt)
 	end
 end
@@ -426,8 +428,8 @@ function processMessage(message)
           count = 0
         end
       end
+			menu = false
     end
-    	menu = false
   end
 end
 
