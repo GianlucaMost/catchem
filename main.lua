@@ -1,5 +1,6 @@
 gameTime = 0
 players = { }
+obstacles = { }
 playerSpeed = 100;
 
 function love.load()
@@ -19,27 +20,34 @@ function love.load()
 	}
 
 	table.insert(players, player2)
+	
+	firstObstacle = {
+		x = 400,
+		y = 400,
+		image = love.graphics.newImage("assets/firstObstacle.png");
+	}
+	
+	table.insert(obstacles, firstObstacle)
 end
 
 function love.draw()
 	for i, player in ipairs(players) do
         love.graphics.draw(player.image, player.x, player.y)
     end
+	for i, obst in ipairs(obstacles) do
+        love.graphics.draw(obst.image, obst.x, obst.y)
+    end
 end
 
-function love.update(dt)
-  gameTime = gameTime + dt
-  for i, p in ipairs(players) do
-	if not i == 0 then
-        p.x = math.sin(gameTime)*100
-	end
-  end
+function movement(dt) 
+  xBefore = player.x;
+  yBefore = player.y;
   
-  if love.keyboard.isDown('up', 's') then
+  if love.keyboard.isDown('down', 's') then
         if player.y < (love.graphics.getHeight() - player.image:getHeight()) then
             player.y = player.y + (playerSpeed*dt)
         end
-    elseif love.keyboard.isDown('down', 'w') then
+    elseif love.keyboard.isDown('up', 'w') then
         if player.y > 0 then
             player.y = player.y - (playerSpeed*dt)
         end
@@ -54,4 +62,30 @@ function love.update(dt)
             player.x = player.x + (playerSpeed*dt)
         end
     end
+	
+	for i, obst in ipairs(obstacles) do
+		if checkCollision(player.x, player.y, player.image:getWidth(), player.image:getHeight(), obst.x, obst.y, obst.image:getWidth(), obst.image:getHeight()) then
+			player.x = xBefore;
+			player.y = yBefore;
+		end
+	end
+end
+
+function love.update(dt)
+  gameTime = gameTime + dt
+  for i, p in ipairs(players) do
+	if not i == 0 then
+        p.x = math.sin(gameTime)*100
+	end
+  end
+  
+ movement(dt)
+
+end
+
+function checkCollision(x1,y1,w1,h1, x2,y2,w2,h2)
+    return x1 < x2+w2 and
+    x2 < x1+w1 and
+    y1 < y2+h2 and
+    y2 < y1+h1
 end
