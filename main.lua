@@ -6,6 +6,7 @@ obstacles = { }
 obstacleNames = { "blue", "darkgray", "gray", "green", "lightblue", "orange", "pink", "purple", "red", "red2", "white" }
 playerSpeed = 200
 menu = true
+debugMode = true
 
 maxDistanceSquared = 40000;
 mayHuntersSeeHunters = true;
@@ -58,12 +59,12 @@ function love.draw()
 	    end
 	  end
 		for i, p in ipairs(hunters) do
-			if (player.hunter and mayHuntersSeeHunters) or (calcDistanceSquared(player, p) < maxDistanceSquared) then
+			if debugMode or (player.hunter and mayHuntersSeeHunters) or (calcDistanceSquared(player, p) < maxDistanceSquared) then
 				love.graphics.draw(p.image, p.x, p.y)
 			end
 		end
 		for i, p in ipairs(haunted) do
-			if calcDistanceSquared(player, p) < maxDistanceSquared then
+			if debugMode or calcDistanceSquared(player, p) < maxDistanceSquared then
 				love.graphics.draw(p.image, p.x, p.y)
 			end
 		end
