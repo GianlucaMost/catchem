@@ -1,3 +1,4 @@
+require "enet"
 local str = require "strings"
 gameTime = 0
 haunted = { }
@@ -84,20 +85,6 @@ function serializeObstacles()
   for i,v in ipairs(obstacles) do
     message = message .. "," .. v.x .. "," .. v.y .. "," .. v.imagePath
   end
-=======
-
-	player2 = {
-		x = 0,
-		y = 0,
-		image = love.graphics.newImage('assets/nyan_cat.png'),
-		name = "first",
-		hunter = false
-	}
-	randomPosition(player2)
-	table.insert(haunted, player2)
-
-  network.init()
->>>>>>> b7632e4b2efc9e3aba19705c0ddc4762ffaea3a2
 end
 
 background = love.graphics.newImage ("/assets/background.png")
@@ -329,7 +316,7 @@ function server_update ()
       player2 = generatePlayer()
       event.peer:send(serializePlayer(player2, true))
       for i,v in ipairs(hunters) do
-        if not v.id = player2.id then
+        if not v.id == player2.id then
           event.peer:send(serializePlayer(v, false))
         end
       end
@@ -401,13 +388,13 @@ end
 
 function processMessage(message)
   splitted = str.split(message,",")
-  if splitted[1] == "Player"
+  if splitted[1] == "Player" then
     p = {
-      id = splitted[3]
+      id = splitted[3],
       x = splitted[4],
       y = splitted[5],
       image = love.graphics.newImage('assets/nyan_cat.png'),
-      hunter = splitted[6]
+      hunter = splitted[6];
     }
     if splitted[2] == "true" then
       player = p
@@ -418,20 +405,20 @@ function processMessage(message)
     else
       table.insert(haunted, p)
     end
-  elseif splitted[1] == "Obstacles"
+  elseif splitted[1] == "Obstacles" then
     count = 0
     for i,v in ipairs(splitted) do
       if not i == 1 then
         if count == 0 then
           obstacleX = v
-        elseif count == 1
+        elseif count == 1 then
           obstacleY = v
-        elseif count == 2
+        elseif count == 2 then
           obstacleImagePath = v
           obstacle = {
       			x = obstacleX,
       			y = obstacleY,
-      			image = love.graphics.newImage(obstacleImagePath)
+      			image = love.graphics.newImage(obstacleImagePath),
             imagePath = obstacleImagePath;
       		}
 
