@@ -96,6 +96,10 @@ function love.update(dt)
   end
 
  movement(dt)
+ 
+ if love.keyboard.isDown('escape') then
+	love.event.push('quit')
+  end
 
 end
 
