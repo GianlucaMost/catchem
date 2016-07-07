@@ -7,6 +7,7 @@ obstacleNames = { "blue", "darkgray", "gray", "green", "lightblue", "orange", "p
 playerSpeed = 200
 menu = true
 debugMode = true
+server = false
 
 maxDistanceSquared = 40000;
 mayHuntersSeeHunters = true;
@@ -132,14 +133,15 @@ end
 function startServer()
 	generate()
 	menu = false;
-	
+	server = true
 	--start listening for clients and send them everything
 	--for a new client create a new haunted
 	-- when all haunted are hunters: Restart: One random hunter, that is stunned 4 seconds
 end
 
 function connectToServer()
-	menu = false;
+	menu = false
+	server = false
 	-- Set Variable player
 	-- Get other players and obstacles from server
 end
@@ -153,28 +155,52 @@ function whatToDo()
 	end
 end
 
+function collision() 
+	for i, hu in ipairs(hunters) do
+		for j, ha in ipairs(haunted) do
+			if checkObjectCollision(hu, ha) then
+				table.insert(hunters, ha)
+				table.remove(haunted, j)
+				ha.hunter = true
+			end
+		end
+	end
+end
+
 function love.update(dt)
 	if menu then
 	  whatToDo()
 	else
-	  gameTime = gameTime + dt
-	  for i, p in ipairs(haunted) do
-		if not i == 0 then
-			p.x = math.sin(gameTime)*100
+		gameTime = gameTime + dt
+		for i, p in ipairs(haunted) do
+			if not i == 0 then
+				p.x = math.sin(gameTime)*100
+			end
 		end
-	  end
 
-	 movement(dt)
+		movement(dt)
+		if server then
+			collision()
+			if table.getn(haunted) == 0 then
+				print("Ende")
+				--TODO restart
+				--TODO set all haunted back to hunter = false
+			end
+		end
 
 	end
 
 	--network.update()
 
 
- if love.keyboard.isDown('escape') then
-	love.event.push('quit')
-  end
+	if love.keyboard.isDown('escape') then
+		love.event.push('quit')
+	end
 
+end
+
+function checkObjectCollision(object1, object2)
+	return checkCollision(object1.x, object1.y, object1.image:getWidth(), object1.image:getHeight(), object2.x, object2.y, object2.image:getWidth(), object2.image:getHeight())
 end
 
 function checkCollision(x1,y1,w1,h1, x2,y2,w2,h2)
