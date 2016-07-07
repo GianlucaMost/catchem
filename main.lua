@@ -1,10 +1,14 @@
 gameTime = 0
 players = { }
 obstacles = { }
-playerSpeed = 100;
+playerSpeed = 100
+menu = true
 
 function love.load()
 	math.randomseed(os.time())
+end
+
+function generate() 
 	player = {
 		x = 512,
 		y = 512,
@@ -32,12 +36,16 @@ function love.load()
 end
 
 function love.draw()
-	for i, player in ipairs(players) do
-        love.graphics.draw(player.image, player.x, player.y)
-    end
-	for i, obst in ipairs(obstacles) do
-        love.graphics.draw(obst.image, obst.x, obst.y)
-    end
+	if menu then
+		love.graphics.print("Press S to create a server, press C to connect");
+	else
+		for i, player in ipairs(players) do
+			love.graphics.draw(player.image, player.x, player.y)
+		end
+		for i, obst in ipairs(obstacles) do
+			love.graphics.draw(obst.image, obst.x, obst.y)
+		end
+	end
 end
 
 
@@ -87,15 +95,39 @@ function checkObstackleCollision(object)
 	return false
 end
 
-function love.update(dt)
-  gameTime = gameTime + dt
-  for i, p in ipairs(players) do
-	if not i == 0 then
-        p.x = math.sin(gameTime)*100
-	end
-  end
+function startServer() 
+	generate()
+	menu = false;
+end
 
- movement(dt)
+function connectToServer() 
+	menu = false;
+end
+
+function whatToDo() 
+	if love.keyboard.isDown('s') then
+		startServer()
+	end
+	if love.keyboard.isDown('c') then
+		connectToServer()
+	end
+end
+
+function love.update(dt)
+	if menu then
+	  whatToDo()
+	else
+	  gameTime = gameTime + dt
+	  for i, p in ipairs(players) do
+		if not i == 0 then
+			p.x = math.sin(gameTime)*100
+		end
+	  end
+
+	 movement(dt)
+	
+	end
+  
  
  if love.keyboard.isDown('escape') then
 	love.event.push('quit')
