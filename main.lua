@@ -4,6 +4,7 @@ haunted = { }
 hunters = { }
 obstacles = { }
 obstacleNames = { "blue", "darkgray", "gray", "green", "lightblue", "orange", "pink", "purple", "red", "red2", "white" }
+bgm = love.audio.newSource("assets/sounds/nyan_sound.mp3", "stream")
 playerSpeed = 200
 menu = true
 debugMode = true
@@ -50,6 +51,7 @@ function generate()
 end
 
 background = love.graphics.newImage ("/assets/background.png")
+
 function love.draw()
 	if menu then
 		love.graphics.print("Press S to create a server, press C to connect", 530, 300);
@@ -72,6 +74,7 @@ function love.draw()
 		for i, obst in ipairs(obstacles) do
 			love.graphics.draw(obst.image, obst.x, obst.y)
 		end
+		love.audio.play(bgm)
 	end
 end
 
