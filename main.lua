@@ -1,3 +1,4 @@
+local network = require "network"
 gameTime = 0
 players = { }
 obstacles = { }
@@ -20,14 +21,16 @@ function love.load()
 	}
 
 	table.insert(players, player2)
-	
+
 	firstObstacle = {
 		x = 400,
 		y = 400,
 		image = love.graphics.newImage("assets/firstObstacle.png");
 	}
-	
+
 	table.insert(obstacles, firstObstacle)
+
+  network.init()
 end
 
 function love.draw()
@@ -40,7 +43,7 @@ function love.draw()
 end
 
 
-function movement(dt) 
+function movement(dt)
   xBefore = player.x;
   yBefore = player.y;
 
@@ -63,7 +66,7 @@ function movement(dt)
             player.x = player.x + (playerSpeed*dt)
         end
     end
-	
+
 	for i, obst in ipairs(obstacles) do
 		if checkCollision(player.x, player.y, player.image:getWidth(), player.image:getHeight(), obst.x, obst.y, obst.image:getWidth(), obst.image:getHeight()) then
 			player.x = xBefore;
@@ -74,12 +77,13 @@ end
 
 function love.update(dt)
   gameTime = gameTime + dt
+  network.update()
   for i, p in ipairs(players) do
 	if not i == 0 then
         p.x = math.sin(gameTime)*100
 	end
   end
-  
+
  movement(dt)
 
 end
