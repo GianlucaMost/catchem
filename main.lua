@@ -24,7 +24,7 @@ function love.load()
 	firstObstacle = {
 		x = 400,
 		y = 400,
-		image = love.graphics.newImage("assets/firstObstacle.png");
+		image = love.graphics.newImage("assets/house.png");
 	}
 	
 	table.insert(obstacles, firstObstacle)
