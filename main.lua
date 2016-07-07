@@ -20,12 +20,12 @@ function generate()
 	player = {
 		x = 512,
 		y = 512,
-		image = love.graphics.newImage('assets/nyan_cat.png'),
+		image = love.graphics.newImage('assets/nyan_dog.png'),
 		name = "first",
 		hunter = true
 	}
 	table.insert(hunters, player)
-	
+
 	player2 = {
 		x = 200,
 		y = 200,
@@ -52,7 +52,7 @@ end
 background = love.graphics.newImage ("/assets/background.png")
 function love.draw()
 	if menu then
-		love.graphics.print("Press S to create a server, press C to connect");
+		love.graphics.print("Press S to create a server, press C to connect", 530, 300);
 	else
 		for i = 0, love.graphics.getWidth() / background:getWidth() do
 	    for j = 0, love.graphics.getHeight() / background:getHeight() do
@@ -75,12 +75,12 @@ function love.draw()
 	end
 end
 
-function calcDistanceSquared(object1, object2) 
+function calcDistanceSquared(object1, object2)
 	xCenter1 = object1.x + object1.image:getWidth() / 2;
 	yCenter1 = object1.y + object1.image:getHeight() / 2;
 	xCenter2 = object2.x + object2.image:getWidth() / 2;
 	yCenter2 = object2.y + object2.image:getHeight() / 2;
-	
+
 	return (xCenter1-xCenter2)*(xCenter1-xCenter2) + (yCenter1 - yCenter2) * (yCenter1 - yCenter2);
 end
 
@@ -155,7 +155,7 @@ function whatToDo()
 	end
 end
 
-function collision() 
+function collision()
 	for i, hu in ipairs(hunters) do
 		for j, ha in ipairs(haunted) do
 			if checkObjectCollision(hu, ha) then
