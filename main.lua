@@ -254,10 +254,9 @@ function collision()
 	for i, hu in ipairs(hunters) do
 		for j, ha in ipairs(haunted) do
 			if checkObjectCollision(hu, ha) then
-				table.insert(hunters, ha)
-				table.remove(haunted, j)
-				ha.hunter = true
-        -- TODO Clients informieren
+				message = "TeamChange," .. tostring(ha.id) .. "," .. tostring(true)
+        broadcastMessage(message)
+				changeToHunter(split(message))
 			end
 		end
 	end
@@ -365,6 +364,7 @@ function server_update ()
 			server_peer = event.peer
       player2 = generatePlayer()
       event.peer:send(serializePlayer(player2, true))
+			broadcastMessage(serializePlayer(player2, false))
       for i,v in ipairs(hunters) do
         if v.id ~= player2.id then
           event.peer:send(serializePlayer(v, false))
@@ -452,12 +452,14 @@ function processMessage(message)
       player = p
 			menu = false
     end
-    if splitted[6] == "true" then
-      p.image = love.graphics.newImage('assets/nyan_dog.png')
-        table.insert(hunters, p)
-    else
-      table.insert(haunted, p)
-    end
+		if p.id ~= player.id or splitted[2] == "true" then
+	    if splitted[6] == "true" then
+	      p.image = love.graphics.newImage('assets/nyan_dog.png')
+	        table.insert(hunters, p)
+	    else
+	      table.insert(haunted, p)
+	    end
+		end
   elseif splitted[1] == "Obstacles" then
     count = 0
     for i,v in ipairs(splitted) do
@@ -489,6 +491,8 @@ function processMessage(message)
 			newY = tonumber(splitted[4])
 			setNewPosition(newID, newX, newY)
 		end
+	elseif splitted[1] == "TeamChange" then
+		changeToHunter(splitted)
 	end
 end
 
@@ -497,20 +501,34 @@ function setNewPosition(nID,nX,nY)
 		return
 	end
 
+	pla = getPlayerByID(nID)
+	pla.x = nX
+	pla.y = nY
+end
+
+function getPlayerByID(nID)
 	for i,v in ipairs(hunters) do
 		if v.id == nID then
-			v.x = nX
-			v.y = nY
-			return
+			return v
 		end
 	end
 	for i,v in ipairs(haunted) do
 		if v.id == nID then
-			v.x = nX
-			v.y = nY
-			return
+			return v
 		end
 	end
+end
+
+function changeToHunter(information)
+	p = getPlayerByID(tonumber(information[2]))
+	table.insert(hunters, p)
+	for i,v in ipairs(haunted) do
+		if v.id == p.id then
+			table.remove(haunted, i)
+		end
+	end
+	p.hunter = true
+	p.image = love.graphics.newImage('assets/nyan_dog.png')
 end
 
 function tobool(bool)
