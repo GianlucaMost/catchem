@@ -5,7 +5,7 @@ haunted = { }
 hunters = { }
 obstacles = { }
 obstacleNames = { "blue", "darkgray", "gray", "green", "lightblue", "orange", "pink", "purple", "red", "red2", "white" }
-bootBackground = love.graphics.newImage("/assets/bootBackground.png")
+bootBackground = love.graphics.newImage("/assets/Potions/potion1.png")
 background = love.graphics.newImage ("/assets/background.png")
 bgm = love.audio.newSource("assets/sounds/music/nyan_sound.mp3", "stream")
 bgm:setVolume(0.5)
@@ -14,11 +14,6 @@ menu = true
 debugMode = true
 isServer = false
 idCount = 0
-
-scale = { }
-scale.x = love.graphics.getWidth()/1366
-scale.y = love.graphics.getHeight()/768
-
 
 local client = {activated = false}
 local server = {activated = false}
@@ -94,7 +89,6 @@ function serializeObstacles()
 end
 
 function love.draw()
-	love.graphics.scale(scale.x, scale.y)
 	if menu then
 		for i = 0, love.graphics.getWidth() / bootBackground:getWidth() do
         for j = 0, love.graphics.getHeight() / bootBackground:getHeight() do
