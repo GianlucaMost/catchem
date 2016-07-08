@@ -26,16 +26,6 @@ function love.load()
 end
 
 function generate()
-	player = {
-    id = idCount,
-		x = 0,
-		y = 0,
-		image = love.graphics.newImage('assets/nyan_dog.png'),
-		hunter = true;
-	}
-	randomPosition(player)
-	table.insert(hunters, player)
-  idCount = idCount + 1
 
 	for i=1, 2 + math.random(8) do
     path = randomObstacle()
@@ -49,17 +39,39 @@ function generate()
 
 		table.insert(obstacles, obstacle)
 	end
+
+	player = {
+    id = idCount,
+		x = 0,
+		y = 0,
+		image = love.graphics.newImage('assets/nyan_dog.png'),
+		hunter = true;
+	}
+	randomPosition(player)
+	table.insert(hunters, player)
+  idCount = idCount + 1
+
+	player2 = {
+		id = idCount,
+		x = 0,
+		y = 0,
+		image = love.graphics.newImage('assets/nyan_cat.png'),
+		hunter = false;
+	}
+	randomPosition(player2)
+	table.insert(haunted, player2)
+	idCount = idCount + 1
 end
 
 function generatePlayer()
-  player2 = {
+  player3 = {
     id = idCount,
 		x = 512,
 		y = 512,
 		image = love.graphics.newImage('assets/nyan_cat.png'),
 		hunter = false
 	}
-	table.insert(hunters, player2)
+	table.insert(hunters, player3)
   idCount = idCount + 1
   return player2
 end
@@ -116,30 +128,60 @@ function movement(dt)
   xBefore = player.x;
   yBefore = player.y;
 
-  if love.keyboard.isDown('down', 's') then
-        if player.y < (love.graphics.getHeight() - player.image:getHeight()) then
-            player.y = player.y + (playerSpeed*dt)
-        end
-    elseif love.keyboard.isDown('up', 'w') then
-        if player.y > 0 then
-            player.y = player.y - (playerSpeed*dt)
-        end
-    end
+	if love.keyboard.isDown('down') then
+			if player.y < (love.graphics.getHeight() - player.image:getHeight()) then
+					player.y = player.y + (playerSpeed*dt)
+			end
+	elseif love.keyboard.isDown('up') then
+			if player.y > 0 then
+					player.y = player.y - (playerSpeed*dt)
+			end
+	end
 
-    if love.keyboard.isDown('left','a') then
-        if player.x > 0 then -- binds us to the map
-            player.x = player.x - (playerSpeed*dt)
-        end
-    elseif love.keyboard.isDown('right','d') then
-        if player.x < (love.graphics.getWidth() - player.image:getWidth()) then
-            player.x = player.x + (playerSpeed*dt)
-        end
-    end
+	if love.keyboard.isDown('left') then
+			if player.x > 0 then -- binds us to the map
+					player.x = player.x - (playerSpeed*dt)
+			end
+	elseif love.keyboard.isDown('right') then
+			if player.x < (love.graphics.getWidth() - player.image:getWidth()) then
+					player.x = player.x + (playerSpeed*dt)
+			end
+	end
 
-		if checkObstackleCollision(player) then
-			player.x = xBefore;
-			player.y = yBefore;
-		end
+if checkObstackleCollision(player) then
+	player.x = xBefore
+	player.y = yBefore
+end
+
+-- below for second player
+
+	xBefore = player2.x
+	yBefore = player2.y
+
+	if love.keyboard.isDown('s') then
+			if player2.y < (love.graphics.getHeight() - player2.image:getHeight()) then
+					player2.y = player2.y + (playerSpeed*dt)
+			end
+	elseif love.keyboard.isDown('w') then
+			if player2.y > 0 then
+					player2.y = player2.y - (playerSpeed*dt)
+			end
+	end
+
+	if love.keyboard.isDown('a') then
+			if player2.x > 0 then -- binds us to the map
+					player2.x = player2.x - (playerSpeed*dt)
+			end
+	elseif love.keyboard.isDown('d') then
+			if player2.x < (love.graphics.getWidth() - player2.image:getWidth()) then
+					player2.x = player2.x + (playerSpeed*dt)
+			end
+	end
+
+	if checkObstackleCollision(player2) then
+		player2.x = xBefore
+		player2.y = yBefore
+	end
 end
 
 function randomPosition(object)
