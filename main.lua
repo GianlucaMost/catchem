@@ -65,7 +65,7 @@ function generatePlayer()
 end
 
 function serializePlayer(player, isCurrentPlayer)
-  return "Player," .. isCurrentPlayer .. "," .. player.id .. "," .. player.x .. "," .. player.y .. ","  .. player.hunter
+  return "Player," .. isCurrentPlayer .. "," .. player.id .. "," .. player.x .. "," .. player.y .. ","  .. tostring(player.hunter)
 end
 
 function serializeObstacles()
@@ -295,7 +295,6 @@ local server_peer = {}
 
 function server_update ()
 	local event = server.host:service()
-	print(event.type)
 
 	while event ~= nil do
 		if event.type == "receive" then
@@ -329,7 +328,6 @@ end
 
 function client_update (dt)
 	local event = client.host:service()
-	print(event.type)
 
 	while event ~= nil do
 		if event.type == "connect" then
@@ -365,11 +363,11 @@ end
 
 -- In love.update
 function update(dt)
-	if not server == nil and server.activated then
+	if server ~= nil and server.activated then
 		server_update (dt)
 	end
 
-	if not client == nil and client.activated then
+	if client ~= nil and client.activated then
 		client_update (dt)
 	end
 end
