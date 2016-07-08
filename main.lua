@@ -5,6 +5,8 @@ haunted = { }
 hunters = { }
 obstacles = { }
 obstacleNames = { "blue", "darkgray", "gray", "green", "lightblue", "orange", "pink", "purple", "red", "red2", "white" }
+bootBackground = love.graphics.newImage("/assets/bootBackground.png")
+background = love.graphics.newImage ("/assets/background.png")
 bgm = love.audio.newSource("assets/sounds/music/nyan_sound.mp3", "stream")
 bgm:setVolume(0.5)
 playerSpeed = 200
@@ -87,10 +89,13 @@ function serializeObstacles()
   end
 end
 
-background = love.graphics.newImage ("/assets/background.png")
-
 function love.draw()
 	if menu then
+		for i = 0, love.graphics.getWidth() / bootBackground:getWidth() do
+        for j = 0, love.graphics.getHeight() / bootBackground:getHeight() do
+          love.graphics.draw(bootBackground, i * bootBackground:getWidth(), j * bootBackground:getHeight())
+        end
+      end
 		love.graphics.print("Press S to create a server, press C to connect", 530, 300);
 	else
 		for i = 0, love.graphics.getWidth() / background:getWidth() do
@@ -247,12 +252,6 @@ function love.update(dt)
 	if menu then
 	  whatToDo()
 	else
-		gameTime = gameTime + dt
-		for i, p in ipairs(haunted) do
-			if not i == 0 then
-				p.x = math.sin(gameTime)*100
-			end
-		end
 
 		movement(dt)
 		if isServer then
