@@ -11,11 +11,12 @@ bgm = love.audio.newSource("assets/sounds/music/nyan_sound.mp3", "stream")
 bgm:setVolume(0.5)
 playerSpeed = 200
 menu = true
-debugMode = true
+debugMode = false
 isServer = false
 idCount = 0
 localMode = false
 attemptingToConnect = false
+endeTimer = 0
 
 local client = {activated = false}
 local server = {activated = false}
@@ -28,20 +29,24 @@ function love.load()
 	math.randomseed(os.time())
 end
 
-function generate()
-
+function generateObstacles()
 	for i=1, 2 + math.random(8) do
-    path = randomObstacle()
+		path = randomObstacle()
 		obstacle = {
 			x = 400,
 			y = 400,
 			image = love.graphics.newImage(path),
-      imagePath = path;
+			imagePath = path;
 		}
 		randomPosition(obstacle)
 
 		table.insert(obstacles, obstacle)
 	end
+end
+
+function generate()
+
+	generateObstacles()
 
 	player = {
     id = idCount,
@@ -119,6 +124,9 @@ function love.draw()
 			love.graphics.draw(obst.image, obst.x, obst.y)
 		end
 		love.audio.play(bgm)
+		if (endeTimer > 0) then
+			love.graphics.print("Alle wurden gefangen. Ende", 530, 50);
+		end
 	end
 end
 
@@ -162,9 +170,9 @@ end
 
 if xBefore ~= player.x or yBefore ~= player.y then
 	if not localMode and not isServer then
-		sendMessage("Movement," .. tostring(player.id) ..  "," .. tostring(player.x) .. "," .. tostring(player.y))
+		sendMessage("Movement," .. tostring(player.id) ..  "," .. tostring(player.x) .. "," .. tostring(player.y) .. "," .. tostring(false))
 	elseif isServer and not localMode then
-		broadcastMessage("Movement," .. tostring(player.id) ..  "," .. tostring(player.x) .. "," .. tostring(player.y))
+		broadcastMessage("Movement," .. tostring(player.id) ..  "," .. tostring(player.x) .. "," .. tostring(player.y) .. "," .. tostring(false))
 	end
 end
 
@@ -264,14 +272,15 @@ function love.update(dt)
 	if menu then
 	  whatToDo()
 	else
+	endeTimer = endeTimer - dt
 
 		movement(dt)
 		if isServer then
 			collision()
-			if table.getn(haunted) == 0 and table.getn(hunters) > 1 then
-				print("Ende")
-				--TODO restart
-				--TODO set all haunted back to hunter = false
+			if table.getn(haunted) == 0 and table.getn(hunters) > 1 and endeTimer <= 0 then
+				broadcastMessage("Ende")
+				printEnde()
+				restart()
 			end
 		end
 
@@ -486,16 +495,24 @@ function processMessage(message)
 			newID = tonumber(splitted[2])
 			newX = tonumber(splitted[3])
 			newY = tonumber(splitted[4])
-			setNewPosition(newID, newX, newY)
+			forced = tobool(splitted[5])
+			setNewPosition(newID, newX, newY, forced)
 		end
 	elseif splitted[1] == "TeamChange" then
 		changeToHunter(splitted)
+	elseif splitted[1] == "Ende" then
+		printEnde()
+		removeObstacles()
+		generalRestart()
 	end
 end
 
-function setNewPosition(nID,nX,nY)
-	if nID == player.id then
+function setNewPosition(nID,nX,nY, forced)
+	if nID == player.id and not forced then
 		return
+	elseif nID == player.id then
+		player.x = nX
+		player.y = nY
 	end
 
 	pla = getPlayerByID(nID)
@@ -527,6 +544,49 @@ function changeToHunter(information)
 	p.hunter = true
 	p.image = love.graphics.newImage('assets/nyan_dog.png')
 end
+
+function printEnde()
+endeTimer = 3
+end
+
+function restart()
+	removeObstacles()
+	generateObstacles()
+	broadcastMessage(serializeObstacles())
+	generalRestart()
+
+	for i,v in ipairs(haunted) do
+		broadcastMessage("Movement," .. tostring(v.id) ..  "," .. tostring(v.x) .. "," .. tostring(v.y) .. "," .. tostring(true))
+	end
+
+	hunterI = math.random(table.getn(haunted))
+	hunter = haunted[hunterI]
+	table.remove(haunted,hunterI)
+	table.insert(hunters,hunter)
+	hunter.hunter = true
+	hunter.image = love.graphics.newImage('assets/nyan_dog.png')
+
+	broadcastMessage("TeamChange," .. tostring(hunter.id) .. "," .. tostring(true))
+end
+
+function removeObstacles()
+	for i,v in ipairs(obstacles) do
+		obstacles[i] = nil
+	end
+end
+
+function generalRestart()
+	for i,v in ipairs(hunters) do
+		table.insert(haunted,v)
+		v.hunter = false
+		v.image = love.graphics.newImage('assets/nyan_cat.png')
+		randomPosition(v)
+	end
+	for i,v in ipairs(hunters) do
+		hunters[i] = nil
+	end
+end
+
 
 function tobool(bool)
 	if (bool == "true") then
