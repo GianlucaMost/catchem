@@ -12,6 +12,8 @@ menu = true
 debugMode = true
 isServer = false
 idCount = 0
+localMode = false
+attemptingToConnect = false
 
 
 local client = {activated = false}
@@ -51,6 +53,7 @@ function generate()
 	table.insert(hunters, player)
   idCount = idCount + 1
 
+if (localMode) then
 	player2 = {
 		id = idCount,
 		x = 0,
@@ -62,6 +65,7 @@ function generate()
 	table.insert(haunted, player2)
 	idCount = idCount + 1
 end
+end
 
 function generatePlayer()
   player3 = {
@@ -71,13 +75,14 @@ function generatePlayer()
 		image = love.graphics.newImage('assets/nyan_cat.png'),
 		hunter = false
 	}
+	randomPosition(player3)
 	table.insert(hunters, player3)
   idCount = idCount + 1
-  return player2
+  return player3
 end
 
-function serializePlayer(player, isCurrentPlayer)
-  return "Player," .. isCurrentPlayer .. "," .. player.id .. "," .. player.x .. "," .. player.y .. ","  .. tostring(player.hunter)
+function serializePlayer(pl, isCurrentPlayer)
+  return "Player," .. tostring(isCurrentPlayer) .. "," .. pl.id .. "," .. pl.x .. "," .. pl.y .. ","  .. tostring(pl.hunter)
 end
 
 function serializeObstacles()
@@ -85,6 +90,7 @@ function serializeObstacles()
   for i,v in ipairs(obstacles) do
     message = message .. "," .. v.x .. "," .. v.y .. "," .. v.imagePath
   end
+	return message
 end
 
 background = love.graphics.newImage ("/assets/background.png")
@@ -153,8 +159,16 @@ if checkObstackleCollision(player) then
 	player.y = yBefore
 end
 
--- below for second player
+if xBefore ~= player.x or yBefore ~= player.y then
+	if not localMode and not isServer then
+		sendMessage("Movement," .. tostring(player.id) ..  "," .. tostring(player.x) .. "," .. tostring(player.y))
+	elseif isServer and not localMode then
+		broadcastMessage("Movement," .. tostring(player.id) ..  "," .. tostring(player.x) .. "," .. tostring(player.y))
+	end
+end
 
+-- below for second player
+if (localMode) then
 	xBefore = player2.x
 	yBefore = player2.y
 
@@ -182,6 +196,7 @@ end
 		player2.x = xBefore
 		player2.y = yBefore
 	end
+end
 end
 
 function randomPosition(object)
@@ -212,20 +227,22 @@ end
 
 function connectToServer()
   init(false)
-  generatePlayer()
+	attemptingToConnect = true
 	isServer = false
 	-- Set Variable player
 	-- Get other players and obstacles from server
 end
 
 function whatToDo()
-	if love.keyboard.isDown('s') then
-		startServer()
-		update()
-	end
-	if love.keyboard.isDown('c') then
-		connectToServer()
-		update()
+	if not attemptingToConnect then
+		if love.keyboard.isDown('s') then
+			startServer()
+			update()
+		end
+		if love.keyboard.isDown('c') then
+			connectToServer()
+			update()
+		end
 	end
 end
 
@@ -257,11 +274,11 @@ function love.update(dt)
 		movement(dt)
 		if isServer then
 			collision()
-			--if table.getn(haunted) == 0 then
-				--print("Ende")
+			if table.getn(haunted) == 0 and table.getn(hunters) > 1 then
+				print("Ende")
 				--TODO restart
 				--TODO set all haunted back to hunter = false
-			--end
+			end
 		end
 
 	end
@@ -341,7 +358,8 @@ function server_update ()
 	while event ~= nil do
 		if event.type == "receive" then
 			print ("Server: got message: ", event.data, event.peer)
-			event.peer:send(event.data)
+			processMessage(event.data)
+			broadcastMessage(event.data)
 			local limit, minimum, maximum = event.peer:timeout(5, 800, 1200);
 		elseif event.type == "connect" then
 			print ("Server: got a new connection (peer count = " .. server.host:peer_count() .. "). Peer index = " .. event.peer:index())
@@ -350,12 +368,12 @@ function server_update ()
       player2 = generatePlayer()
       event.peer:send(serializePlayer(player2, true))
       for i,v in ipairs(hunters) do
-        if not v.id == player2.id then
+        if v.id ~= player2.id then
           event.peer:send(serializePlayer(v, false))
         end
       end
       for i,v in ipairs(haunted) do
-        if not v.id == player2.id then
+        if v.id ~= player2.id then
           event.peer:send(serializePlayer(v, false))
         end
       end
@@ -396,11 +414,6 @@ function client_update (dt)
 		event = client.host:service()
 	end
 
-	-- actions that are done every second
-	if client.peer and math.floor (love.timer.getTime() - client.last_message_timestamp) > 0 then
-		client.last_message_timestamp = love.timer.getTime()
-		client.peer:send("Packet " .. tostring (client.counter))
-	end
 end
 
 -- In love.update
@@ -415,24 +428,31 @@ function update(dt)
 end
 
 function sendMessage(message)
-  local event = client.host:service()
-  client.peer = event.peer
-  event.peer:send(message)
+  client.peer:send(message)
+end
+
+function broadcastMessage(message)
+	local i = 1
+	while i < server.host:peer_count() + 1 do
+		local p = server.host:get_peer(i)
+		p:send(message)
+		i = i + 1
+	end
 end
 
 function processMessage(message)
-	print("test")
-  splitted = str.split(message,",")
+  splitted = split(message,",")
   if splitted[1] == "Player" then
     p = {
-      id = splitted[3],
-      x = splitted[4],
-      y = splitted[5],
+      id = tonumber(splitted[3]),
+      x = tonumber(splitted[4]),
+      y = tonumber(splitted[5]),
       image = love.graphics.newImage('assets/nyan_cat.png'),
-      hunter = splitted[6];
+      hunter = tobool(splitted[6]);
     }
     if splitted[2] == "true" then
       player = p
+			menu = false
     end
     if splitted[6] == "true" then
       p.image = love.graphics.newImage('assets/nyan_dog.png')
@@ -443,16 +463,18 @@ function processMessage(message)
   elseif splitted[1] == "Obstacles" then
     count = 0
     for i,v in ipairs(splitted) do
-      if not i == 1 then
+      if i ~= 1 then
         if count == 0 then
           obstacleX = v
+					count = count + 1
         elseif count == 1 then
           obstacleY = v
+					count = count + 1
         elseif count == 2 then
           obstacleImagePath = v
           obstacle = {
-      			x = obstacleX,
-      			y = obstacleY,
+      			x = tonumber(obstacleX),
+      			y = tonumber(obstacleY),
       			image = love.graphics.newImage(obstacleImagePath),
             imagePath = obstacleImagePath;
       		}
@@ -461,15 +483,42 @@ function processMessage(message)
           count = 0
         end
       end
-			menu = false
     end
-  end
+  elseif splitted[1] == "Movement" then
+		for i,v in ipairs(splitted) do
+			newID = tonumber(splitted[2])
+			newX = tonumber(splitted[3])
+			newY = tonumber(splitted[4])
+			setNewPosition(newID, newX, newY)
+		end
+	end
 end
 
-function love.keypressed(key, code)
-	print ("got key: " .. key)
+function setNewPosition(nID,nX,nY)
+	if nID == player.id then
+		return
+	end
 
-	if (key == "escape") then
-		love.event.push("quit")
+	for i,v in ipairs(hunters) do
+		if v.id == nID then
+			v.x = nX
+			v.y = nY
+			return
+		end
+	end
+	for i,v in ipairs(haunted) do
+		if v.id == nID then
+			v.x = nX
+			v.y = nY
+			return
+		end
+	end
+end
+
+function tobool(bool)
+	if (bool == "true") then
+		return true
+	else
+		return false
 	end
 end
