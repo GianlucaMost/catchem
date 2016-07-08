@@ -15,6 +15,10 @@ debugMode = true
 isServer = false
 idCount = 0
 
+scale = { }
+scale.x = love.graphics.getWidth()/1366
+scale.y = love.graphics.getHeight()/768
+
 
 local client = {activated = false}
 local server = {activated = false}
@@ -90,6 +94,7 @@ function serializeObstacles()
 end
 
 function love.draw()
+	love.graphics.scale(scale.x, scale.y)
 	if menu then
 		for i = 0, love.graphics.getWidth() / bootBackground:getWidth() do
         for j = 0, love.graphics.getHeight() / bootBackground:getHeight() do
