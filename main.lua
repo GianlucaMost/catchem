@@ -5,7 +5,7 @@ haunted = { }
 hunters = { }
 obstacles = { }
 obstacleNames = { "blue", "darkgray", "gray", "green", "lightblue", "orange", "pink", "purple", "red", "red2", "white" }
-bootBackground = love.graphics.newImage("/assets/Potions/potion1.png")
+bootBackground = love.graphics.newImage("/assets/bootBackground.png")
 background = love.graphics.newImage ("/assets/background.png")
 bgm = love.audio.newSource("assets/sounds/music/nyan_sound.mp3", "stream")
 bgm:setVolume(0.5)
@@ -96,12 +96,9 @@ end
 
 function love.draw()
 	if menu then
-		for i = 0, love.graphics.getWidth() / bootBackground:getWidth() do
-        for j = 0, love.graphics.getHeight() / bootBackground:getHeight() do
-          love.graphics.draw(bootBackground, i * bootBackground:getWidth(), j * bootBackground:getHeight())
-        end
-      end
-		love.graphics.print("Press S to create a server, press C to connect", 530, 300);
+    love.graphics.draw(bootBackground)
+
+		love.graphics.print("Press S to create a server, press C to connect", 530, 50);
 	else
 		for i = 0, love.graphics.getWidth() / background:getWidth() do
 	    for j = 0, love.graphics.getHeight() / background:getHeight() do
