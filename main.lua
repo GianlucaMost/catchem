@@ -77,7 +77,7 @@ function generatePlayer()
 		hunter = false
 	}
 	randomPosition(player3)
-	table.insert(hunters, player3)
+	table.insert(haunted, player3)
   idCount = idCount + 1
   return player3
 end
@@ -251,9 +251,9 @@ function collision()
 	for i, hu in ipairs(hunters) do
 		for j, ha in ipairs(haunted) do
 			if checkObjectCollision(hu, ha) then
-				message = "TeamChange," .. tostring(ha.id) .. "," .. tostring(true)
-        broadcastMessage(message)
-				changeToHunter(split(message))
+				msg = "TeamChange," .. tostring(ha.id) .. "," .. tostring(true)
+        broadcastMessage(msg)
+				changeToHunter(split(msg,","))
 			end
 		end
 	end
